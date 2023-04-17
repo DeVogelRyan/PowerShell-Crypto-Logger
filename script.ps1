@@ -1,23 +1,28 @@
 function WriteLog {
     param(
-        # Forcing the need for this parameter.
+        # Forcing the need for this parameter. As well as making sure it's an object.
         [Parameter(Position = 0, mandatory = $true)]
         [System.Object] $BTCData)
-    $Logfile = "C:\PS\computername.csv"
-    $LogMessage = '"{0}", "{1}", "{2}", "{3}"' -f $BTCData.updatedTime, $BTCData.rateUSD, $BTCData.rateGBP, $BTCData.rateEUR
-    if (-Not (Test-Path $Logfile)) {
-        Add-content $LogFile -value "UpdatedAt, USDRate, BGPRate, EURRate"
+    $fileName = Read-Host -Prompt 'Give me the filename pls. No file extension is needed'
+    $filePath = "C:\PS\{0}.csv" -f $fileName
+    $items = '"{0}", "{1}", "{2}", "{3}"' -f $BTCData.updatedTime, $BTCData.rateUSD, $BTCData.rateGBP, $BTCData.rateEUR
+    if (-Not (Test-Path $filePath)) {
+        Add-content $filePath -value "UpdatedAt, USDRate, BGPRate, EURRate"
     }
-    Add-content $LogFile -value $LogMessage
+    Add-content $filePath -value $items
+
+    Write-host "The file is being written at: " $filePath
 }
 
 function RequestAPI {
-    # retrieve URL from .env file
+    # Retrieve URL from .env file
     get-content .env | foreach {
+        # Split the name of the variable and the value. Outcome: name=URL, value="http//url..."
         $name, $value = $_.split('=')
         Write-Host $value
+        # API request
         $response = Invoke-RestMethod -Uri $value
-        #pass properties to object
+        # Pass properties to object
         $data = [PSCustomObject]@{
             updatedTime = $response.time.updated
             rateUSD     = $response.bpi.USD.rate_float
